@@ -22,7 +22,6 @@ from flask import Flask, request, render_template, g, redirect, Response
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -34,7 +33,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #
 #     DATABASEURI = "postgresql://biliris:foobar@104.196.152.219/proj1part2"
 #
-DATABASEURI = "postgresql://user:password@104.196.152.219/proj1part2"
+DATABASEURI = "postgresql://yj2682:4749@35.196.192.139/proj1part2"
 
 
 #
@@ -64,8 +63,9 @@ def before_request():
   """
   try:
     g.conn = engine.connect()
+    print("connecting")
   except:
-    print "uh oh, problem connecting to database"
+    print("uh oh, problem connecting to database")
     import traceback; traceback.print_exc()
     g.conn = None
 
@@ -77,6 +77,7 @@ def teardown_request(exception):
   """
   try:
     g.conn.close()
+    print("connection closing")
   except Exception as e:
     pass
 
@@ -107,7 +108,8 @@ def index():
   """
 
   # DEBUG: this is debugging code to see what request looks like
-  print request.args
+  print("index")
+  print(request.args)
 
 
   #
@@ -183,7 +185,7 @@ def login():
 
 if __name__ == "__main__":
   import click
-
+  print("hi")
   @click.command()
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
@@ -203,7 +205,7 @@ if __name__ == "__main__":
     """
 
     HOST, PORT = host, port
-    print "running on %s:%d" % (HOST, PORT)
+    print("running on %s:%d" % (HOST, PORT))
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
 
