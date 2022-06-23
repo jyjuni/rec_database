@@ -1,0 +1,53 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+  <head>
+    COMS-W4111 Database Design
+  </head>
+
+<body>
+  <h1>Welcome!</h1>
+
+  <div>
+    {% if total_user%}
+    <div>There are total {{total_user}} users using our platform.</div>
+    {% endif %}
+
+    {% if total_item%}
+    <div>There are total {{total_item}} items in our platform.</div>
+    {% endif %}
+
+    {% if total_retailer%}
+    <div>There are total {{total_retailer}} retailers using our platform.</div>
+    {% endif %}
+
+    {% if total_order%}
+    <div>There are total {{total_order}} orders using our platform.</div>
+    {% endif %}
+  </div>
+
+  <div>
+
+  <p><b>Select Your Role to Login:</b></p>
+  <a href="login">user</a>
+  <a href="retailer_login">retailer</a>
+  <a href="admin_login">admin</a>
+</div>
+<hr>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+</body>
+</html>

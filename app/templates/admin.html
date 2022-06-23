@@ -1,0 +1,30 @@
+{% block content %}
+<h1>Authorization succeeded. hello, admin!</h1>
+Select a query key type:
+<form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    {% if error %}
+    <span style="color: red;">[{{ "Username-password combination not found!" }}]</span>
+    {% endif %}
+
+    <p>
+        {{ form.search_by.label }}<br>
+        {{ form.search_by}}<br>
+        {% for error in form.search_by.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.key.label }}<br>
+        {{ form.key(size=32) }}<br>
+        {% for error in form.key.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>{{ form.submit() }}</p>
+
+
+</form>
+{% endblock %}
+

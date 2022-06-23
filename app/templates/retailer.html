@@ -1,0 +1,63 @@
+<h1>hello, {{user_info["username"]}}!</h1>
+
+<h3>Account Information</h3>
+
+<div>
+    <div>Retailer ID:   {{user_info["retailer_id"]}}</div>
+    <div>Retailer Name:   {{user_info["username"]}}</div>
+    <div>Account created at:   {{user_info["created_time"]}}</div>
+    <div>Industry:   {{user_info["industry"]}}</div>
+    <div>Average Rating:   {{user_info["average_rating"]}}</div>
+    <div>Total Revenue:   {{user_info["total_sale_amount"]}}</div>
+  </div>
+
+
+  <h3>All Items</h3>
+  <div>
+    <table>
+        <thead>
+          <tr>
+          {% for key in all_items_title %}
+            <th class="c1">{{key}}</th>
+          {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for item_id, item_name, price, brand, item_average_rating, item_sale_quantity in all_items %}
+          <tr>
+            <td class="c2">{{item_id}}</td>
+            <td class="c2">{{item_name}}</td>
+            <td class="c2">{{price}}</td>
+            <td class="c2">{{brand}}</td>
+            <td class="c2">{{item_average_rating}}</td>
+            <td class="c2">{{item_sale_quantity}}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+
+      <h3>All Advertisements</h3>
+      <div>
+        <table>
+            <thead>
+              <tr>
+              {% for key in all_ads_title %}
+                <th class="c1">{{key}}</th>
+              {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+            {% for ad_id, item_id, item_name, ad_title, valid_until, ad_price in all_ads %}
+              <tr>
+                <td class="c2">{{ad_id}}</td>
+                <td class="c2">{{item_id}}</td>
+                <td class="c2">{{item_name}}</td>
+                <td class="c2">{{ad_title}}</td>
+                <td class="c2">{{valid_until}}</td>
+                <td class="c2">{{ad_price}}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+
+  </div>
