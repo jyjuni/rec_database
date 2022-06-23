@@ -5,21 +5,20 @@
 <div>
     <div>User ID:   {{user_info["user_id"]}}</div>
     <div>Username:   {{user_info["user_name"]}}</div>
-    <div>Date of birth:   {{user_info["dob"]}}</div>
     <div>Gender:   {{user_info["gender"]}}</div>
+    <div>Date of birth:   {{user_info["dob"]}}</div>
     <div>Account created at:   {{user_info["created_time"]}}</div>
   </div>
 
-  <form method="post" action="/">
-    <input type="submit" value="UPDATE" name="update"/>
-    </form>
+  <form action="{{ url_for('update_user') }}">  
+    <input type="submit" value="Update Account" name="update"/>
+  </form>    
 
   <h3>Order History</h3>
   <div>
-    <!-- <div>{{all_items_title}}</div>
-    {% for a in all_items %}
-    <div>{{a}}</div>
-    {% endfor %} -->
+    {% if not all_items %}
+    <span style="color: rgb(48, 62, 104);">    No order found:(    </span>
+    {% else %}
     <table>
         <thead>
           <tr>
@@ -29,16 +28,14 @@
           </tr>
         </thead>
         <tbody>
-        {% for order_id, item_name, retailer_name, brand, quantity, order_time in all_items %}
+        {% for all_values in all_items %}
           <tr>
-            <td class="c2">{{order_id}}</td>
-            <td class="c2">{{item_name}}</td>
-            <td class="c2">{{retailer_name}}</td>
-            <td class="c2">{{brand}}</td>
-            <td class="c2">{{quantity}}</td>
-            <td class="c2">{{order_time}}</td>
+        {% for v in all_values %}
+            <td class="c2">{{v}}</td>
+        {% endfor %}
           </tr>
         {% endfor %}
         </tbody>
       </table>
+      {% endif %}
   </div>

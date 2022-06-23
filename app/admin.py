@@ -49,3 +49,16 @@ def query_top_n_amount(n=10):
 
 def query_top_n_rating(n=10):
     return QUERY_TOP_N_RATING.format(n)
+
+def query_delete_item(search_by, key):
+    print(search_by, key)
+    # Delete Item
+    query = "DELETE FROM {} WHERE {}={}; "
+    if search_by=="user_id":
+        return query.format('users', 'user_id', key)
+    elif search_by=="retailer_id":
+        return query.format('retailer', 'retailer_id', key)
+    elif search_by=="item_id":
+        return query.format('item', 'item_id', key)
+    else:
+        return query.format('order_detail', 'order_id', key)

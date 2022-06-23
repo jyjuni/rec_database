@@ -1,0 +1,23 @@
+
+{% block content %}
+<h1>Update Item Info</h1>
+<h3>Please Enter Your New Item Info:</h3>
+<form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    {% if error %}
+    <span style="color: red;">[{{ error }}]</span>
+    {% endif %}
+    {% for field in (form.item_id, form.item_name, form.price, form.brand, form.description, form.color)%}
+    <p>
+        {{ field.label }}<br>
+        {{ field(size=32) }}<br>
+        {% for error in field.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    {% endfor %}
+   
+    <p>{{ form.update() }}</p>
+</form>
+{% endblock %}

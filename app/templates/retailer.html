@@ -1,12 +1,20 @@
 <h1>hello, {{user_info["username"]}}!</h1>
 
-<h3>Account Information</h3>
+<h3>Your Account Information</h3>
 
 <div>
     <div>Retailer ID:   {{user_info["retailer_id"]}}</div>
     <div>Retailer Name:   {{user_info["username"]}}</div>
     <div>Account created at:   {{user_info["created_time"]}}</div>
     <div>Industry:   {{user_info["industry"]}}</div>
+  </div>
+  
+    <form action="{{ url_for('update_retailer') }}">  
+      <input type="submit" value="Update Account" name="update"/>  
+    </form>    
+
+<h3>Your Account Performance</h3>
+<div>
     <div>Average Rating:   {{user_info["average_rating"]}}</div>
     <div>Total Revenue:   {{user_info["total_sale_amount"]}}</div>
   </div>
@@ -14,6 +22,9 @@
 
   <h3>All Items</h3>
   <div>
+    {% if not all_items %}
+    <span style="color: rgb(48, 62, 104);">    No item found:(    </span>
+    {% else %}
     <table>
         <thead>
           <tr>
@@ -23,21 +34,26 @@
           </tr>
         </thead>
         <tbody>
-        {% for item_id, item_name, price, brand, item_average_rating, item_sale_quantity in all_items %}
-          <tr>
-            <td class="c2">{{item_id}}</td>
-            <td class="c2">{{item_name}}</td>
-            <td class="c2">{{price}}</td>
-            <td class="c2">{{brand}}</td>
-            <td class="c2">{{item_average_rating}}</td>
-            <td class="c2">{{item_sale_quantity}}</td>
-          </tr>
+        {% for all_values in all_items %}
+        <tr>
+          {% for v in all_values %}
+              <td class="c2">{{v}}</td>
+              {% endfor %}
+            </tr>
         {% endfor %}
         </tbody>
       </table>
 
+      <form action="{{ url_for('update_item') }}">  
+        <input type="submit" value="Update Item" name="update"/>  
+      </form>    
+      {% endif %}
+
       <h3>All Advertisements</h3>
       <div>
+      {% if not all_ads %}
+      <span style="color: rgb(48, 62, 104);">    No ads found:(    </span>
+      {% else %}
         <table>
             <thead>
               <tr>
@@ -59,5 +75,7 @@
             {% endfor %}
             </tbody>
           </table>
+      {% endif %}
+
 
   </div>

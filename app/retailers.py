@@ -23,7 +23,7 @@ WHERE retailer_id='{}';
 # Query item details for retailer + 
 QUERY_ITEMS_INFO = """
 WITH a AS(
-SELECT i.item_id, item_name, price, brand FROM item i WHERE retailer_id='{}'
+SELECT i.item_id, item_name, price, brand, color FROM item i WHERE retailer_id='{}'
 ),
 b AS(
 SELECT it.item_id, rated_score as item_rating
@@ -37,13 +37,19 @@ SELECT quantity, i.item_id
 FROM order_detail o, item i
 WHERE i.retailer_id='{}' AND i.item_id=o.item_id
 )
-SELECT a.item_id, item_name, price, brand, TRUNC(AVG(item_rating),1) item_rating, COALESCE(SUM(quantity),0) item_total_sale
+SELECT a.item_id, item_name, price, brand, color, TRUNC(AVG(item_rating),1) item_rating, COALESCE(SUM(quantity),0) item_total_sale
 FROM a
 LEFT OUTER JOIN b
 ON a.item_id = b.item_id
 LEFT OUTER JOIN c
 ON a.item_id = c.item_id
-GROUP BY a.item_id, item_name, price, brand;
+GROUP BY a.item_id, item_name, price, brand, color;
+"""
+
+# Delete Item
+DELETE_ITEM = """
+DELETE FROM item
+WHERE item_id={};
 """
 
 # Query ad details for retailer
@@ -58,13 +64,37 @@ WHERE i.item_id IN (SELECT item_id FROM item WHERE retailer_id = '{}')
 GROUP BY ad_id, a1.item_id, item_name, ad_title
 """
 
+# Insert new retailer
+INSERT_RETAILER = """
+INSERT INTO retailer(retailer_id, retailer_name, password, created_time) 
+VALUES({}, '{}', '{}', NOW())
+"""
+
+
+def query_insert_newretailer(user_id, user_name, password):
+    return INSERT_RETAILER.format(user_id, user_name, password)
+
 def query_retailer_info(retailer_id):
     return QUERY_RETAILER_INFO.format(retailer_id)
 
 def query_items_info(retailer_id):
     return QUERY_ITEMS_INFO.format(retailer_id, retailer_id, retailer_id)
 
+def change_items_info(item_id, item_name, price, brand, description, color):
+    set_query = []
+    if item_name:
+        set_query.append(f"item_name='{item_name}'") 
+    if price:
+        set_query.append(f"price={price}")
+    if brand:
+        set_query.append(f"brand='{brand}'")
+    if description:
+        set_query.append(f"description='{description}'")
+    if color:
+        set_query.append(f"color='{color}'")
+    if not set_query: # no field changed
+        return None
+    return "UPDATE item SET " + ",".join(set_query) + f" WHERE item_id={item_id} RETURNING *;" 
+
 def query_ads_info(retailer_id):
     return QUERY_AD_INFO.format(retailer_id)
-
-    

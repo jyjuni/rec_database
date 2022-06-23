@@ -1,7 +1,26 @@
 {% block content %}
-<h2>Authorization succeeded.</h2>
+<h1>Authorization succeeded.</h1>
 <h1>Hello, Admin:)</h1>
-<h3>Select a query key type:</h3>
+<h2>Dashboard</h2>
+<div>
+  {% if total_user%}
+  <div>There are total {{total_user}} users using our platform.</div>
+  {% endif %}
+
+  {% if total_item%}
+  <div>There are total {{total_item}} items in our platform.</div>
+  {% endif %}
+
+  {% if total_retailer%}
+  <div>There are total {{total_retailer}} retailers using our platform.</div>
+  {% endif %}
+
+  {% if total_order%}
+  <div>There are total {{total_order}} orders using our platform.</div>
+  {% endif %}
+</div>
+
+<h2>Start a new query:</h2>
 <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
 
@@ -24,10 +43,12 @@
         {% endfor %}
     </p>
     <p>{{ form.submit() }}</p>
-</form>
 
-<h3>Query Result</h3>
+<h2>Query Result</h2>
       <div>
+        {% if not all_info %}
+        <span style="color: rgb(48, 62, 104);">    No result found:(    </span>
+        {% else %}        
         <table>
             <thead>
               <tr>
@@ -46,9 +67,15 @@
             {% endfor %}
             </tbody>
           </table>
+          {% endif %}        
 
-  </div>
 
+          <p>{{ form.delete() }}</p>
+
+          
+        </div>
+        
+      </form>
 
 
 {% endblock %}

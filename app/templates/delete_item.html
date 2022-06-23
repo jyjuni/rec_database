@@ -1,0 +1,41 @@
+
+{% block content %}
+<h1>Delete Item</h1>
+<h3>This is to confim you want to delte the following record:</h3>
+<form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    {% if error %}
+    <span style="color: red;">[{{ error }}]</span>
+    {% endif %}
+
+    <h3>Item Detail</h3>
+    <div>
+      {% if error %}
+      <span style="color: red;">    No item found:(    </span>
+      {% endif %}
+
+      <table>
+          <thead>
+            <tr>
+            {% for key in all_info_title %}
+              <th class="c1">{{key}}</th>
+            {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+          {% for all_values in all_info %}
+          <tr>
+            {% for v in all_values %}
+                <td class="c2">{{v}}</td>
+                {% endfor %}
+              </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        
+    <p>{{ form.cancel() }} {{ form.delete() }}</p>
+
+
+</form>
+{% endblock %}
