@@ -6,7 +6,7 @@ from app.retailers import *
 from app.admin import *
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, flash
+from flask import Flask, request, render_template, g, redirect, Response, flash, url_for, session
 # from flask_login import login_required
 # from flask_login import login_user, logout_user
 
@@ -51,76 +51,86 @@ def teardown_request(exception):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
+    form = LoginForm()
+    if form.validate_on_submit():
+        cursor = g.conn.execute(f"SELECT * FROM users where user_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
+        user_info = {}
+        for result in cursor:
+            user_info = {k:v for k,v in result.items() if k != "password"}
+            break
 
-        form = LoginForm()
-        if form.validate_on_submit():
-            cursor = g.conn.execute(f"SELECT * FROM users where user_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
-            user_info = {}
-            for result in cursor:
-                user_info = {k:v for k,v in result.items() if k != "password"}
-                break
-
-            if user_info: #username-password found in table
-                # get order history
-                user_id = user_info['user_id']
-                cursor = g.conn.execute(query_order_history(user_id))
-                all_items = []
-                for result in cursor:
-                    all_items.append(list(result.values()))
-                all_items_title = list(result.keys()) if result else []
-
-                context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title}
-                return render_template('user.html', title='user_info', **context)
-
-            else: #not found in table
-                return render_template('login.html', title='Sign In', form=form, error="Username-password combination not found!")
+        if user_info: #username-password found in table
+            session['user_info'] = user_info
+            return redirect(url_for("user", user_info=user_info))
+           
+        else: #not found in table
+            return render_template('login.html', title='Sign In', form=form, error="Username-password combination not found!")
 
     return render_template('login.html', title='Sign In', form=form)
 
+
+@app.route('/user', methods=['GET', 'POST'])
+def user():
+    user_info = session['user_info']
+    # get order history
+    user_id = user_info['user_id']
+    cursor = g.conn.execute(query_order_history(user_id))
+    all_items = []
+    for result in cursor:
+        all_items.append(list(result.values()))
+    all_items_title = list(result.keys()) if result else []
+
+    context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title}
+    return render_template('user.html', title='user_info', **context)
+    
 
 @app.route('/retailer_login', methods=['GET', 'POST'])
 def retailer_login():
-    if request.method == 'POST':
-        form = LoginForm()
-        if form.validate_on_submit():
-            # flash('Login requested for user {}, remember_me={}'.format(
-            #     form.username.data, form.remember_me.data))
-            cursor = g.conn.execute(f"SELECT * FROM retailer WHERE retailer_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
-            user_check = None
-            for result in cursor:
-                user_check = result
-                break
+    form = LoginForm()
+    if form.validate_on_submit():
+        # flash('Login requested for user {}, remember_me={}'.format(
+        #     form.username.data, form.remember_me.data))
+        cursor = g.conn.execute(f"SELECT * FROM retailer WHERE retailer_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
+        user_check = None
+        for result in cursor:
+            user_check = {k:v for k,v in result.items()}
+            break
 
-            if user_check: #username-password found in table
-                user_id = user_check['retailer_id']
-                # query retailer info
-                cursor = g.conn.execute(query_retailer_info(user_id))
-                for result in cursor:
-                    user_info = {k:v for k,v in result.items()}
-                    break
+        if user_check: #username-password found in table
+            session['user_check'] = user_check
+            return redirect(url_for("retailer", user_check=user_check))
 
-                # query items info
-                cursor = g.conn.execute(query_items_info(user_id))
-                all_items = []
-                for result in cursor:
-                    all_items.append(list(result.values()))
-                all_items_title = list(result.keys()) if result else []
+        else: #not found in table
+            return render_template('retailer_login.html', title='Sign In', form=form, error="Username-password combination not found!")
 
-                # query ads info
-                cursor = g.conn.execute(query_ads_info(user_id))
-                all_ads = []
-                for result in cursor:
-                    all_ads.append(list(result.values()))
-                all_ads_title = list(result.keys()) if result else []
+    return render_template('retailer_login.html', title='Sign In', form=form)
 
-                context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title, "all_ads":all_ads, "all_ads_title":all_ads_title}
-                return render_template('retailer.html', title='retailer_info', **context)
+@app.route('/retailer', methods=['GET', 'POST'])
+def retailer():
+    user_check = session['user_check']
+    user_id = user_check['retailer_id']
+    # query retailer info
+    cursor = g.conn.execute(query_retailer_info(user_id))
+    for result in cursor:
+        user_info = {k:v for k,v in result.items()}
+        break
 
-            else: #not found in table
-                return render_template('retailer_login.html', title='Sign In', form=form, error="Username-password combination not found!")
+    # query items info
+    cursor = g.conn.execute(query_items_info(user_id))
+    all_items = []
+    for result in cursor:
+        all_items.append(list(result.values()))
+    all_items_title = list(result.keys()) if result else []
 
-    return render_template('login.html', title='Sign In', form=form)
+    # query ads info
+    cursor = g.conn.execute(query_ads_info(user_id))
+    all_ads = []
+    for result in cursor:
+        all_ads.append(list(result.values()))
+    all_ads_title = list(result.keys()) if result else []
+
+    context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title, "all_ads":all_ads, "all_ads_title":all_ads_title}
+    return render_template('retailer.html', title='retailer_info', **context)
 
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
@@ -134,7 +144,22 @@ def admin_login():
 def admin():
     form = SearchKeyForm()
     if form.validate_on_submit():
-        return render_template('admin.html', title='admin', form=form)
+        # print(form.search_by.data, form.key.data)
+        # query full info
+        cursor = g.conn.execute(query_full_info(form.search_by.data, form.key.data))
+        print(query_full_info(form.search_by.data, form.key.data))
+        all_info = []
+        for result in cursor:
+            all_info.append(list(result.values()))
+        if all_info:
+            all_info_title = list(result.keys()) if result else []
+            context = {"all_info":all_info, "all_info_title":all_info_title}
+            print(all_info)
+            return render_template('admin.html', title='admin', form=form, **context)
+        else:
+            return render_template('admin.html', title='admin', form=form, error="Result not found")
+
+
     return render_template('admin.html', title='admin', form=form)
 
 @app.route('/')
@@ -157,7 +182,6 @@ def index():
     "SELECT COUNT(DISTINCT user_id) FROM users UNION ALL SELECT COUNT(DISTINCT retailer_id) FROM retailer UNION ALL SELECT COUNT(DISTINCT order_id) FROM order_detail UNION ALL SELECT COUNT(DISTINCT item_id) FROM item")
   for result in cursor:
     total.append(result[0])
-
   
   context = {"total_user": total[0], "total_retailer":total[1], "total_order":total[2], "total_item":total[3]}
   return render_template("index.html", **context)
