@@ -55,7 +55,7 @@ def teardown_request(exception):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        cursor = g.conn.execute(f"SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
+        cursor = g.conn.execute(text("SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_name = :username AND password = :password"), username=form.username.data, password= form.password.data)
         user_info = {}
         for result in cursor:
             user_info = {k:v for k,v in result.items()}
@@ -80,7 +80,7 @@ def login():
 
                 # insert new user
                 cursor = g.conn.execute(query_insert_newuser(user_id, form.username.data, form.password.data))
-                cursor = g.conn.execute(f"SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
+                cursor = g.conn.execute(text("SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_name= :username AND password = :password"), username=form.username.data, password= form.password.data)
                 user_info = {}
                 for result in cursor:
                     user_info = {k:v for k,v in result.items()}
@@ -101,9 +101,9 @@ def user():
     user_info = session['user_info']
     # get order history
     user_id = user_info['user_id']
-    print(user_info['dob'], user_info['created_time'], type(user_info['dob']))
+    # print(user_info['dob'], user_info['created_time'], type(user_info['dob']))
     
-    cursor = g.conn.execute(query_order_history(user_id))
+    cursor = g.conn.execute(text(QUERY_ORDER_HISTORY), user_id=user_id)
     all_items = []
     for result in cursor:
         all_items.append(list(result.values()))
@@ -111,7 +111,7 @@ def user():
     all_items_title = list(result.keys()) if all_items else []
 
     # show ads
-    cursor = g.conn.execute(query_ads())
+    cursor = g.conn.execute(SHOW_AD)
     all_ads = []
     for result in cursor:
         all_ads.append(list(result.values()))
@@ -137,8 +137,7 @@ def shop():
     orderform=OrderForm()
 
     if form.submit.data and form.validate_on_submit():
-        cursor = g.conn.execute(query_items(form.search_by.data, form.key.data))
-        print(query_items(form.search_by.data, form.key.data))
+        cursor = g.conn.execute(text(query_items(form.search_by.data)), key=form.key.data)
         all_info = []
         for result in cursor:
             all_info.append(list(result.values()))
@@ -154,7 +153,7 @@ def shop():
 
     if orderform.order.data and orderform.validate_on_submit(): # place order
         item_id, quantity = orderform.item_id.data, orderform.quantity.data
-        cursor = g.conn.execute(f"SELECT * FROM item WHERE item_id={item_id}")
+        cursor = g.conn.execute(text("SELECT * FROM item WHERE item_id=:item_id"), item_id=item_id)
         found_item_id = None
         for result in cursor:
             found_item_id = result[0]
@@ -167,9 +166,8 @@ def shop():
                 new_order_id = result[0]
                 break
             # insert new user
-            print("checkcheck", INSERT_ORDER.format(new_order_id, item_id, user_id, quantity))
-            cursor = g.conn.execute(INSERT_ORDER.format(new_order_id, item_id, user_id, quantity))
-            cursor = g.conn.execute(f"SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_id={user_id}")
+            cursor = g.conn.execute(text(INSERT_ORDER), order_id=new_order_id, item_id=item_id, user_id=user_id, quantity=quantity)
+            cursor = g.conn.execute(text("SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_id=:user_id"), user_id=user_id)
             user_info = {}
             for result in cursor:
                 user_info = {k:v for k,v in result.items()}
@@ -190,7 +188,7 @@ def rate():
         order_id, score = form.order_id.data, form.score.data
 
         # validate order exists and not rated before
-        cursor = g.conn.execute(f"SELECT * FROM order_detail WHERE order_id={order_id} and user_id={user_id} and order_id NOT IN (SELECT order_id FROM rating);")
+        cursor = g.conn.execute(text("SELECT * FROM order_detail WHERE order_id=:order_id and user_id=:user_id and order_id NOT IN (SELECT order_id FROM rating);"), order_id=order_id, user_id=user_id)
         found_order_id = None
         for result in cursor:
             found_order_id = result[0]
@@ -201,9 +199,8 @@ def rate():
 
         else: # give rating
             # insert rating
-            cursor = g.conn.execute(INSERT_RATING.format(order_id, score))
-
-            cursor = g.conn.execute(f"SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_id={user_id}")
+            cursor = g.conn.execute(text(INSERT_RATING), order_id=order_id, rated_score=score)
+            cursor = g.conn.execute(text("SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_id=:user_id"), user_id=user_id)
             user_info = {}
             for result in cursor:
                 user_info = {k:v for k,v in result.items()}
@@ -221,7 +218,7 @@ def update_user():
 
     form=UpdateForm()
     if form.validate_on_submit():
-        cursor = g.conn.execute(f"UPDATE users SET user_name='{form.new_username.data}', password='{form.new_password.data}' WHERE user_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%' RETURNING *;" )
+        cursor = g.conn.execute(text("UPDATE users SET user_name=:new_username, password=:new_password WHERE user_name = :username AND password = :password RETURNING *;") , new_username = form.new_username.data, new_password=form.new_password.data, username = form.username.data, password=form.password.data)
         user_info = None
         for result in cursor:
             user_info = {k:v for k,v in result.items() if k != "password"}
@@ -241,11 +238,12 @@ def update_user():
 def retailer_login():
     form = LoginForm()
     if form.validate_on_submit():
+        cursor = g.conn.execute(text("SELECT * FROM retailer WHERE retailer_name=:username AND password=:password"), username=form.username.data, password= form.password.data)
         
-        cursor = g.conn.execute(f"SELECT * FROM retailer WHERE retailer_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%'" )
         user_check = None
         for result in cursor:
             user_check = result['retailer_id']
+            print(result)
             break
 
         if form.submit.data: # login
@@ -267,7 +265,7 @@ def retailer_login():
                     user_id = result[0]
                     break
                 # insert new retailer
-                cursor = g.conn.execute(query_insert_newretailer(user_id, form.username.data, form.password.data))
+                cursor = g.conn.execute(text(INSERT_RETAILER), retailer_id=user_id, retailer_name=form.username.data, password=form.password.data)
                 session['user_check'] = user_id
                 assert(user_id)
                 return redirect(url_for("retailer", user_check=user_check))
@@ -279,20 +277,20 @@ def retailer():
     form = RetailerForm()
     user_id = session['user_check']
     # query retailer info
-    cursor = g.conn.execute(query_retailer_info(user_id))
+    cursor = g.conn.execute(text(QUERY_RETAILER_INFO), retailer_id = user_id)
     for result in cursor:
         user_info = {k:v for k,v in result.items()}
         break
 
     # query items info
-    cursor = g.conn.execute(query_items_info(user_id))
+    cursor = g.conn.execute(text(QUERY_ITEMS_INFO), retailer_id=user_id)
     all_items = []
     for result in cursor:
         all_items.append(list(result.values()))
     all_items_title = list(result.keys()) if result else []
 
     # query ads info
-    cursor = g.conn.execute(query_ads_info(user_id))
+    cursor = g.conn.execute(text(QUERY_AD_INFO), retailer_id=user_id)
     all_ads = []
     for result in cursor:
         all_ads.append(list(result.values()))
@@ -328,7 +326,7 @@ def ads():
         end_date = str(end_date)
 
         #verify item_id
-        cursor = g.conn.execute(f"SELECT * FROM item WHERE item_id={item_id} and retailer_id={user_id}")
+        cursor = g.conn.execute(text("SELECT * FROM item WHERE item_id=:item_id and retailer_id=:retailer_id"), item_id=item_id, retailer_id=user_id)
         found_order_id = None
         for result in cursor:
             found_order_id = result[0]
@@ -348,11 +346,10 @@ def ads():
                 ad_payment_id = result[0]
                 break
             # insert ad_payment
-            cursor = g.conn.execute(f"INSERT INTO ad_payment(ad_payment_id, amount, transaction_time) VALUES({ad_payment_id}, {price}, NOW())")
+            cursor = g.conn.execute(text("INSERT INTO ad_payment(ad_payment_id, amount, transaction_time) VALUES(:ad_payment_id, :price, NOW())"), ad_payment_id=ad_payment_id, price=price)
            
             # insert ad
-            cursor = g.conn.execute(INSERT_AD.format(ad_id, item_id, ad_title, start_date, end_date, ad_payment_id))
-            
+            cursor = g.conn.execute(text(INSERT_AD), ad_id=ad_id, item_id=item_id, ad_title=ad_title, start_date=start_date, end_date=end_date, ad_payment_id=ad_payment_id)
             session['user_check'] = user_id
             return redirect(url_for("retailer", user_check=user_id))
 
@@ -364,7 +361,8 @@ def update_retailer():
     print('update retailer')
     form=UpdateForm()
     if form.validate_on_submit():
-        cursor = g.conn.execute(f"UPDATE retailer SET retailer_name='{form.new_username.data}', password='{form.new_password.data}' WHERE retailer_name LIKE '%%{form.username.data}%%' AND password LIKE '%%{form.password.data}%%' RETURNING *;" )
+        cursor = g.conn.execute(text("UPDATE retailer SET retailer_name=:new_username, password=:new_password WHERE retailer_name= :username AND password = :password RETURNING *;") , new_username = form.new_username.data, new_password=form.new_password.data, username = form.username.data, password=form.password.data)
+        
         user_check = None
         for result in cursor:
             user_check = result['retailer_id']
@@ -385,7 +383,6 @@ def update_item():
     print('update item')
     form=UpdateItemForm()
     if form.validate_on_submit():
-        print(form.item_id.data, form.item_name.data, form.price.data, form.brand.data, form.description.data, form.color.data)
         change_query = change_items_info(form.item_id.data, form.item_name.data, form.price.data, form.brand.data, form.description.data, form.color.data)
         cursor = g.conn.execute(change_query)
         user_check = None
@@ -432,8 +429,7 @@ def admin():
     form = SearchKeyForm()
     if form.validate_on_submit():
         # query full info
-        cursor = g.conn.execute(query_full_info(form.search_by.data, form.key.data))
-        print(query_full_info(form.search_by.data, form.key.data))
+        cursor = g.conn.execute(text(query_full_info(form.search_by.data)), key=form.key.data)
         all_info = []
         for result in cursor:
             all_info.append(list(result.values()))
@@ -468,14 +464,11 @@ def delete_item():
     all_info, all_info_title = session["all_info"], session["all_info_title"]
     if form.validate_on_submit():
         if form.delete.data:
-            delete_query = query_delete_item(all_info_title[0], all_info[0][0])
-            cursor = g.conn.execute(delete_query)
+            delete_query = query_delete_item(all_info_title[0])
+            cursor = g.conn.execute(text(delete_query), key=all_info[0][0])
             return redirect(url_for('admin'))
         elif form.cancel.data:
             return redirect(url_for('admin'))
-
-
-        
     context = {"all_info":all_info, "all_info_title":all_info_title}
     return render_template('delete_item.html', title='delete_item', form=form, **context)
 

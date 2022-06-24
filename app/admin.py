@@ -12,7 +12,7 @@ JOIN retailer r
 ON r.retailer_id = t.retailer_id
 GROUP BY t.retailer_id, retailer_name
 ORDER BY total_sale_amount DESC
-LIMIT {};"""
+LIMIT 5;"""
 
 # TOP N RETAILER IN RATING
 QUERY_TOP_N_RATING="""
@@ -26,39 +26,32 @@ GROUP BY retailer_id
 JOIN retailer r1
 ON r1.retailer_id = t.retailer_id
 ORDER BY retailer_rating DESC
-LIMIT {};"""
+LIMIT 5;"""
 
 
-def query_full_info(search_by, key):
+def query_full_info(search_by):
     QUERY = ""
     if search_by=="1":
-        QUERY = "SELECT * FROM users WHERE user_id = '{}'"
+        QUERY = "SELECT * FROM users WHERE user_id = :key"
     elif search_by=="2":
-        QUERY = "SELECT * FROM retailer WHERE retailer_id = '{}'"
+        QUERY = "SELECT * FROM retailer WHERE retailer_id = :key"
     elif search_by=="3":
-        QUERY = "SELECT * FROM item WHERE item_id = '{}'"
+        QUERY = "SELECT * FROM item WHERE item_id = :key"
     else:
-        QUERY = "SELECT * FROM order_detail WHERE order_id = '{}'"
-    return QUERY.format(key)
+        QUERY = "SELECT * FROM order_detail WHERE order_id = :key"
+    return QUERY
 
 
 
-def query_top_n_amount(n=10):
-    return QUERY_TOPN5_SALE.format(n)
 
-
-def query_top_n_rating(n=10):
-    return QUERY_TOP_N_RATING.format(n)
-
-def query_delete_item(search_by, key):
-    print(search_by, key)
+def query_delete_item(search_by):
     # Delete Item
     query = "DELETE FROM {} WHERE {}={}; "
     if search_by=="user_id":
-        return query.format('users', 'user_id', key)
+        return query.format('users', 'user_id', ':key')
     elif search_by=="retailer_id":
-        return query.format('retailer', 'retailer_id', key)
+        return query.format('retailer', 'retailer_id', ':key')
     elif search_by=="item_id":
-        return query.format('item', 'item_id', key)
+        return query.format('item', 'item_id', ':key')
     else:
-        return query.format('order_detail', 'order_id', key)
+        return query.format('order_detail', 'order_id', ':key')
