@@ -43,7 +43,8 @@ LEFT OUTER JOIN b
 ON a.item_id = b.item_id
 LEFT OUTER JOIN c
 ON a.item_id = c.item_id
-GROUP BY a.item_id, item_name, price, brand, color;
+GROUP BY a.item_id, item_name, price, brand, color
+ORDER BY a.item_id;
 """
 
 # Delete Item
@@ -62,7 +63,7 @@ JOIN item i
 ON i.item_id=a1.item_id
 WHERE i.item_id IN (SELECT item_id FROM item WHERE retailer_id = '{}')
 GROUP BY ad_id, a1.item_id, item_name, ad_title
-ORDER BY valid_until DESC
+ORDER BY ad_id DESC;
 """
 
 # Insert new retailer

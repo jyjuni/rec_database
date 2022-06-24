@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, DecimalField, IntegerField, DateField
-from wtforms.validators import DataRequired, NumberRange, Length, Optional
+from wtforms.validators import DataRequired, NumberRange, Length, Optional, ValidationError
 from datetime import date
 
 class LoginForm(FlaskForm):
@@ -46,19 +46,23 @@ class RetailerForm(FlaskForm):
     update_item = SubmitField('Update Item')
     ads = SubmitField('Purchase Ads')
 
+
 class AdsForm(FlaskForm):
     ad_title = StringField('Ad Title', validators=[DataRequired()])
     item_id = IntegerField('Item ID', validators=[DataRequired()])
-    start_date = DateField('Start Date', validators=[DataRequired()],default=date.today)
-    end_date = DateField('End Date', validators=[DataRequired()],default=date.today)
+    start_date = DateField('Start Date', validators=[DataRequired()],default=date.today())
+    end_date = DateField('End Date', validators=[DataRequired()],default=date.today())
     order = SubmitField('Purchase')
 
     def validate_on_submit(self):
-        result = super(AdsForm, self).validate()
-        if (self.start_date.data>self.end_date.data) or (self.start_date.data < date.today()):
-            return False
-        else:
+        result = super(AdsForm, self).validate_on_submit()
+        if date.today() <= self.start_date.data <= self.end_date.data:
             return result
+        else:
+            self.start_date.errors.append('Date is illegal!')
+            self.end_date.errors.append('Date is illegal!')
+
+            return False
 
 class UpdateItemForm(FlaskForm):
     item_id = StringField('Item ID', validators=[DataRequired()])

@@ -6,7 +6,7 @@
     {{ form.hidden_tag() }}
 
     {% if error %}
-    <span style="color: red;">[{{ "Order not found!" }}]</span>
+    <span style="color: red;">[{{ error }}]</span>
     {% endif %}
         <p>
             {{ form.ad_title.label }}<br>

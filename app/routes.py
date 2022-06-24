@@ -188,12 +188,17 @@ def rate():
     form=RateForm()
     if form.validate_on_submit(): # give rating
         order_id, score = form.order_id.data, form.score.data
-        cursor = g.conn.execute(f"SELECT * FROM order_detail WHERE order_id={order_id} and user_id={user_id}")
+
+        # validate order exists and not rated before
+        cursor = g.conn.execute(f"SELECT * FROM order_detail WHERE order_id={order_id} and user_id={user_id} and order_id NOT IN (SELECT order_id FROM rating);")
         found_order_id = None
         for result in cursor:
             found_order_id = result[0]
         if not found_order_id: #username-password combination already exist
-            return render_template('rate.html', title='rate', form=form, error="Order not found!")
+            return render_template('rate.html', title='rate', form=form, error="Found nothing you can rate!")
+
+
+
         else: # give rating
             # insert rating
             cursor = g.conn.execute(INSERT_RATING.format(order_id, score))
@@ -406,6 +411,9 @@ def admin_login():
     if form.validate_on_submit():
         if form.token.data in AUTH_TOKENS:
             return redirect('/admin')
+        else:
+            return render_template('admin_login.html', title='Sign In', form=form, error="token incorrect")
+
     return render_template('admin_login.html', title='Sign In', form=form)
 
 @app.route('/admin', methods=['GET', 'POST'])
