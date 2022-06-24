@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,10 +16,10 @@ th {
 </style>
 </head>
 <body>
+  {% extends 'index.html' %}
 
 {% block content %}
-<h1>Authorization succeeded.</h1>
-<h1>Hello, Admin:)</h1>
+<h2>Authorization succeeded:) Hello, Admin!</h1>
 <h2>Dashboard</h2>
 <div>
   {% if total_user%}
