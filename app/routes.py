@@ -103,11 +103,11 @@ def user():
     user_id = user_info['user_id']
     # print(user_info['dob'], user_info['created_time'], type(user_info['dob']))
     
+    print(user_id)
     cursor = g.conn.execute(text(QUERY_ORDER_HISTORY), user_id=user_id)
     all_items = []
     for result in cursor:
         all_items.append(list(result.values()))
-        break
     all_items_title = list(result.keys()) if all_items else []
 
     # show ads
@@ -391,6 +391,7 @@ def update_item():
             break
 
         if user_check: #item found in table
+
             print(user_check)            
             session['user_check'] = user_check['retailer_id']
             return redirect(url_for("retailer", user_check=user_check['retailer_id']))

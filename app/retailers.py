@@ -101,7 +101,7 @@ def change_items_info(item_id, item_name, price, brand, description, color):
         set_query.append(f"color='{color}'")
     if not set_query: # no field changed
         return None
-    change_items_query =  "UPDATE item SET " + ",".join(set_query) + f" WHERE item_id={item_id} RETURNING *;" 
+    return "UPDATE item SET " + ",".join(set_query) + f" WHERE item_id={item_id} RETURNING *;" 
 
 def query_ads_info(retailer_id):
     return QUERY_AD_INFO.format(retailer_id)
