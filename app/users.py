@@ -40,7 +40,7 @@ def query_items(search_by):
     elif search_by=="2":
         QUERY += "AND item_name LIKE :key"
     elif search_by=="3":
-        QUERY += "AND retailer_name LIKE :key"
+        QUERY += "AND retailer_name = :key"
     elif search_by=="4":
         QUERY += "AND color LIKE :key"
     else:
