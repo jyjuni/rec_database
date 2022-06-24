@@ -13,6 +13,7 @@ This web front project seeks to simulate the online transactions between the use
 ## Pages and Sections
 
 ### Aligning with Part 1.1
+
 All features laid out in the original proposal, except ad payment system, in part 1 have been implemented. For the Ads payment syste, since we do not have the technical ability to implement a real transaction system, we choose to set our ads price to 100 USD/day and insert a new record with ad_payment_id, calculated price and corresponding ad_id directly into `ad_payment` table.
 
 
@@ -29,7 +30,7 @@ When placing an order, the user might be interested to search the order based on
 In addition, after an order has been placed, the user can also give a rating to the product using the order id. This rating system will be used to give a rating to every item, and the retailers will know how its items are doing. 
 
 
-### Retailer: 
+### Retailer 
 
 Similar to the user, a retailer can first sign up on the website and update his or her basic information (e.g username: yj2682, password: 1122334455). This page is going to be blank at first but allows the retailer to start updating the product offerings and the advertisements on those products. 
 
@@ -40,7 +41,7 @@ The retailer can also purchase advertisements using the purchase advertisement f
 
 ### Admin
 
-As the admin, we will want to have an overall view of the entire website. For example, we might want to know what are some of the transactions made by a certain user. Since all the details in the database are linked by the user_id, retailer_id, item_id, and order_id, we will be querying the database using these fields as well. For example, if we want to check user id 14 (who is Montana) we can simply search by user_id 14, and we will get the information from the results table. 
+As the admin(token: yj2682), we will want to have an overall view of the entire website. For example, we might want to know what are some of the transactions made by a certain user. Since all the details in the database are linked by the user_id, retailer_id, item_id, and order_id, we will be querying the database using these fields as well. For example, if we want to check user id 14 (who is Montana) we can simply search by user_id 14, and we will get the information from the results table. 
 An admin also has the choice to delete any user, retailer, item or order. If the admin presses the delete button, he or she will be redirected to a confirmation page which shows the item info once again. Upon confirmation, an item will be deleted from the SQL database, and the admin will be redirected to the admin page.
 
 
@@ -48,7 +49,7 @@ An admin also has the choice to delete any user, retailer, item or order. If the
 The two most interesting query function we implemented are: 
 
 1. Query all info of the retailer (except password), with total items and total average rating and sell count
-```
+```{sql}
 SELECT retailer_id, retailer_name as username, created_time, industry,
 (SELECT TRUNC(AVG(rated_score),1) as average_rating
 FROM rating ra WHERE order_id IN (
@@ -71,7 +72,7 @@ WHERE retailer_id=:retailer_id;
 ```
 
 2. Query item details for retailer and compute average item raing, sum of sales quantity
-```
+```{sql}
 WITH a AS(
 SELECT i.item_id, item_name, price, brand, color FROM item i WHERE retailer_id=:retailer_id
 ),

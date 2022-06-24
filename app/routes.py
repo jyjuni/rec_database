@@ -79,7 +79,7 @@ def login():
                     break
 
                 # insert new user
-                cursor = g.conn.execute(query_insert_newuser(user_id, form.username.data, form.password.data))
+                cursor = g.conn.execute(text(INSERT_USER), user_id=user_id, user_name=form.username.data, password=form.password.data)
                 cursor = g.conn.execute(text("SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_name= :username AND password = :password"), username=form.username.data, password= form.password.data)
                 user_info = {}
                 for result in cursor:
@@ -137,7 +137,9 @@ def shop():
     orderform=OrderForm()
 
     if form.submit.data and form.validate_on_submit():
-        cursor = g.conn.execute(text(query_items(form.search_by.data)), key=form.key.data)
+        query, key = query_items(form.search_by.data, form.key.data)
+        cursor = g.conn.execute(text(query), key=key)
+        print(text(query), key)
         all_info = []
         for result in cursor:
             all_info.append(list(result.values()))
@@ -383,8 +385,9 @@ def update_item():
     print('update item')
     form=UpdateItemForm()
     if form.validate_on_submit():
-        change_query = change_items_info(form.item_id.data, form.item_name.data, form.price.data, form.brand.data, form.description.data, form.color.data)
-        cursor = g.conn.execute(change_query)
+        change_query, d = change_items_info(form.item_id.data, form.item_name.data, form.price.data, form.brand.data, form.description.data, form.color.data)
+        cursor = g.conn.execute(text(change_query), **d)
+        print(change_query, cursor)
         user_check = None
         for result in cursor:
             user_check = {k:v for k,v in result.items() if k != "password"}

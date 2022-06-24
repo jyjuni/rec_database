@@ -32,17 +32,21 @@ def query_order_history(user_id):
 def query_insert_newuser(user_id, user_name, password):
     return INSERT_USER.format(user_id, user_name, password)
 
-def query_items(search_by):
+def query_items(search_by, key):
     # search_by = SelectField('Search by', choices=[(1, 'item_id'), (2, 'item_name'), (3,'retailer'), (4, 'color'), (5,'brand')])
     QUERY = "select item_id, item_name, retailer_name, price, brand, color, description from item i, retailer r WHERE i.retailer_id=r.retailer_id "
     if search_by=="1":
         QUERY += "AND item_id = :key"
     elif search_by=="2":
         QUERY += "AND item_name LIKE :key"
+        key = f"%{key}%"
     elif search_by=="3":
-        QUERY += "AND retailer_name = :key"
+        QUERY += "AND retailer_name LIKE :key"
+        key = f"%{key}%"
     elif search_by=="4":
         QUERY += "AND color LIKE :key"
+        key = f"%{key}%"
     else:
         QUERY += "AND brand LIKE :key"
-    return QUERY
+        key = f"%{key}%"
+    return QUERY, key

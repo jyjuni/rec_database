@@ -20,6 +20,7 @@ GROUP BY i.item_id, price
 FROM retailer r
 WHERE retailer_id=:retailer_id;
 """
+
 # Query item details for retailer + 
 QUERY_ITEMS_INFO = """
 WITH a AS(
@@ -37,14 +38,18 @@ SELECT quantity, i.item_id
 FROM order_detail o, item i
 WHERE i.retailer_id=:retailer_id AND i.item_id=o.item_id
 )
-SELECT a.item_id, item_name, price, brand, color, TRUNC(AVG(item_rating),1) item_rating, COALESCE(SUM(quantity),0) item_total_sale
+SELECT t.item_id, item_name, price, brand, color, item_total_sale, TRUNC(AVG(item_rating),1) item_rating
+FROM(
+SELECT a.item_id, item_name, price, brand, color, COALESCE(SUM(quantity),0) item_total_sale
 FROM a
-LEFT OUTER JOIN b
-ON a.item_id = b.item_id
 LEFT OUTER JOIN c
 ON a.item_id = c.item_id
 GROUP BY a.item_id, item_name, price, brand, color
-ORDER BY a.item_id;
+) t
+LEFT OUTER JOIN b
+ON t.item_id = b.item_id
+GROUP BY t.item_id, item_name, price, brand, color, item_total_sale
+ORDER BY t.item_id;
 """
 
 # Delete Item
@@ -89,19 +94,26 @@ def query_items_info(retailer_id):
 
 def change_items_info(item_id, item_name, price, brand, description, color):
     set_query = []
+    d = {"item_id":item_id}
+
     if item_name:
-        set_query.append(f"item_name='{item_name}'") 
+        set_query.append(f"item_name=:item_name") 
+        d["item_name"] = item_name
     if price:
-        set_query.append(f"price={price}")
+        set_query.append(f"price=:price")
+        d["price"] = price
     if brand:
-        set_query.append(f"brand='{brand}'")
+        set_query.append(f"brand=:brand")
+        d["brand"] = brand
     if description:
-        set_query.append(f"description='{description}'")
+        set_query.append(f"description=:description")
+        d["description"] = description
     if color:
-        set_query.append(f"color='{color}'")
+        set_query.append(f"color=:color")
+        d["color"] = color
     if not set_query: # no field changed
         return None
-    return "UPDATE item SET " + ",".join(set_query) + f" WHERE item_id={item_id} RETURNING *;" 
+    return "UPDATE item SET " + ",".join(set_query) + f" WHERE item_id=:item_id RETURNING *;", d
 
 def query_ads_info(retailer_id):
     return QUERY_AD_INFO.format(retailer_id)
