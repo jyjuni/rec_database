@@ -62,6 +62,7 @@ JOIN item i
 ON i.item_id=a1.item_id
 WHERE i.item_id IN (SELECT item_id FROM item WHERE retailer_id = '{}')
 GROUP BY ad_id, a1.item_id, item_name, ad_title
+ORDER BY valid_until DESC
 """
 
 # Insert new retailer
@@ -70,6 +71,11 @@ INSERT INTO retailer(retailer_id, retailer_name, password, created_time)
 VALUES({}, '{}', '{}', NOW())
 """
 
+
+INSERT_AD = """
+INSERT INTO ad(ad_id, item_id, ad_title, start_date, end_date, ad_payment_id)
+VALUES({}, {}, '{}', TO_DATE('{}','YYYY-MM-DD'), TO_DATE('{}','YYYY-MM-DD'), {});
+"""
 
 def query_insert_newretailer(user_id, user_name, password):
     return INSERT_RETAILER.format(user_id, user_name, password)

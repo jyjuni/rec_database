@@ -1,4 +1,11 @@
+{% block content %}
+
 <h1>hello, {{user_info["user_name"]}}!</h1>
+
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+<p>{{ form.order() }}</p>
 
 <h3>Account Information</h3> 
 
@@ -10,9 +17,39 @@
     <div>Account created at:   {{user_info["created_time"]}}</div>
   </div>
 
-  <form action="{{ url_for('update_user') }}">  
-    <input type="submit" value="Update Account" name="update"/>
-  </form>    
+  <!-- <form action="{{ url_for('update_user') }}">  
+    <input type="submit" value="Update Account" name="update"/> -->
+  <!-- </form>     -->
+
+    <p>{{ form.update() }}</p>
+  
+
+    <h3>Recommended ads</h3>
+    <div>
+    {% if not all_ads %}
+    <span style="color: rgb(48, 62, 104);">    No ads found:(    </span>
+    {% else %}
+      <table>
+          <thead>
+            <tr>
+            {% for key in all_ads_title %}
+              <th class="c1">{{key}}</th>
+            {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+          {% for all_values in all_ads %}
+            <tr>
+              {% for v in all_values %}
+              <td class="c2">{{v}}</td>
+             {% endfor %}
+
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+    {% endif %}
+
 
   <h3>Order History</h3>
   <div>
@@ -38,4 +75,9 @@
         </tbody>
       </table>
       {% endif %}
+      <p>{{ form.rate() }}</p>
+
   </div>
+</form>
+
+{% endblock %}

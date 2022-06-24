@@ -1,0 +1,47 @@
+
+{% block content %}
+<h1>Welcome, retailer:)</h1>
+<h2>Purchase an ad today:</h2>
+<form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    {% if error %}
+    <span style="color: red;">[{{ "Order not found!" }}]</span>
+    {% endif %}
+        <p>
+            {{ form.ad_title.label }}<br>
+            {{ form.ad_title(size=32)}}<br>
+            {% for error in form.ad_title.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.item_id.label }}<br>
+            {{ form.item_id(size=32)}}<br>
+            {% for error in form.item_id.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.start_date.label }}<br>
+            {{ form.start_date()}}<br>
+            {% for error in form.start_date.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.end_date.label }}<br>
+            {{ form.end_date()}}<br>
+            {% for error in form.end_date.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        
+        <p>{{ form.order() }}</p>
+
+      </form>
+
+
+{% endblock %}
+
+

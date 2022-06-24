@@ -1,0 +1,77 @@
+
+{% block content %}
+<h1>Welcome, shopper:)</h1>
+<h2>Search</h2>
+<form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    {% if error %}
+    <span style="color: red;">[{{ "Result not found!" }}]</span>
+    {% endif %}
+
+    <p>
+        {{ form.search_by.label }}<br>
+        {{ form.search_by}}<br>
+        {% for error in form.search_by.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.key.label }}<br>
+        {{ form.key(size=32) }}<br>
+        {% for error in form.key.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>{{ form.submit() }}</p>
+
+<h2>Query Result</h2>
+      <div>
+        {% if not all_info %}
+        <span style="color: rgb(48, 62, 104);">    No result found:(    </span>
+        {% else %}        
+        <table>
+            <thead>
+              <tr>
+              {% for key in all_info_title %}
+                <th class="c1">{{key}}</th>
+              {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+            {% for entires in all_info %}
+              <tr>
+                {% for c in entires %}
+                <td class="c2">{{c}}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}        
+
+        </div>
+
+        <h2>Place Order</h2>
+        <p>
+            {{ orderform.item_id.label }}<br>
+            {{ orderform.item_id(size=32)}}<br>
+            {% for error in orderform.item_id.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ orderform.quantity.label }}<br>
+            {{ orderform.quantity(size=32) }}<br>
+            {% for error in orderform.quantity.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ orderform.order() }}</p>
+
+      </form>
+
+
+{% endblock %}
+
+

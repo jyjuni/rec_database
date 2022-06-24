@@ -1,6 +1,12 @@
+{% block content %}
+
 <h1>hello, {{user_info["username"]}}!</h1>
 
 <h3>Your Account Information</h3>
+
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+
 
 <div>
     <div>Retailer ID:   {{user_info["retailer_id"]}}</div>
@@ -8,10 +14,11 @@
     <div>Account created at:   {{user_info["created_time"]}}</div>
     <div>Industry:   {{user_info["industry"]}}</div>
   </div>
-  
+<!--   
     <form action="{{ url_for('update_retailer') }}">  
       <input type="submit" value="Update Account" name="update"/>  
-    </form>    
+    </form>     -->
+    <p>{{ form.update_account() }}</p>
 
 <h3>Your Account Performance</h3>
 <div>
@@ -43,10 +50,13 @@
         {% endfor %}
         </tbody>
       </table>
-
+<!-- 
       <form action="{{ url_for('update_item') }}">  
         <input type="submit" value="Update Item" name="update"/>  
-      </form>    
+      </form>     -->
+
+      <p>{{ form.update_item() }}</p>
+
       {% endif %}
 
       <h3>All Advertisements</h3>
@@ -77,5 +87,13 @@
           </table>
       {% endif %}
 
+      <p>{{ form.ads() }}</p>
 
   </div>
+
+
+
+</form>
+
+
+{% endblock %}

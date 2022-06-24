@@ -1,12 +1,14 @@
 import os
 from app import app
-from app.forms import LoginForm, AuthForm, SearchKeyForm, UpdateForm, UpdateItemForm, DeleteItemForm
+from app.forms import *
 from app.users import *
 from app.retailers import *
 from app.admin import *
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, flash, url_for, session
+from datetime import datetime
+
 # from flask_login import login_required
 # from flask_login import login_user, logout_user
 
@@ -31,7 +33,7 @@ def before_request():
   """
   try:
     g.conn = engine.connect()
-    print("connecting")
+    # print("connecting")
   except:
     print("uh oh, problem connecting to database")
     import traceback; traceback.print_exc()
@@ -45,7 +47,7 @@ def teardown_request(exception):
   """
   try:
     g.conn.close()
-    print("connection closing")
+    # print("connection closing")
   except Exception as e:
     pass
 
@@ -94,21 +96,120 @@ def login():
 
 @app.route('/user', methods=['GET', 'POST'])
 def user():
-    form = request.form
+    # form = request.form
+    form = UserForm()
     user_info = session['user_info']
     # get order history
     user_id = user_info['user_id']
     print(user_info['dob'], user_info['created_time'], type(user_info['dob']))
+    
     cursor = g.conn.execute(query_order_history(user_id))
     all_items = []
     for result in cursor:
         all_items.append(list(result.values()))
         break
     all_items_title = list(result.keys()) if all_items else []
-    context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title}
+
+    # show ads
+    cursor = g.conn.execute(query_ads())
+    all_ads = []
+    for result in cursor:
+        all_ads.append(list(result.values()))
+    all_ads_title = list(result.keys()) if all_ads else []
+
+    context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title, "all_ads":all_ads, "all_ads_title":all_ads_title}
+    if form.validate_on_submit():
+        if form.update.data:
+            return redirect(url_for('update_user'))
+        elif form.order.data:
+            print("form")
+            session['user_id'] = user_id
+            return redirect(url_for('shop', user_id=user_id))
+        elif form.rate.data:
+            session['user_id'] = user_id
+            return redirect(url_for('rate', user_id=user_id))
     return render_template('user.html', title='user_info', **context, form=form)
 
-    
+@app.route('/shop', methods=['GET', 'POST'])
+def shop():
+    user_id = session["user_id"]
+    form=ShopForm()
+    orderform=OrderForm()
+
+    if form.submit.data and form.validate_on_submit():
+        cursor = g.conn.execute(query_items(form.search_by.data, form.key.data))
+        print(query_items(form.search_by.data, form.key.data))
+        all_info = []
+        for result in cursor:
+            all_info.append(list(result.values()))
+        context = {}
+        if all_info:
+            all_info_title = list(result.keys()) if result else []
+            context["all_info"] = all_info
+            context["all_info_title"] = all_info_title
+            print(all_info)
+            return render_template('shop.html', title='shop', form=form, orderform=orderform, **context)
+        else:
+            return render_template('shop.html', title='shop', form=form, orderform=orderform, error="Result not found", **context)
+
+    if orderform.order.data and orderform.validate_on_submit(): # place order
+        item_id, quantity = orderform.item_id.data, orderform.quantity.data
+        cursor = g.conn.execute(f"SELECT * FROM item WHERE item_id={item_id}")
+        found_item_id = None
+        for result in cursor:
+            found_item_id = result[0]
+        if not found_item_id: #username-password combination already exist
+            return render_template('shop.html', title='Sign In', form=form, orderform=orderform, error="Item not found!")
+        else: # place order
+            new_order_id = None
+            cursor = g.conn.execute("SELECT MAX(order_id)+1 FROM order_detail;")
+            for result in cursor:
+                new_order_id = result[0]
+                break
+            # insert new user
+            print("checkcheck", INSERT_ORDER.format(new_order_id, item_id, user_id, quantity))
+            cursor = g.conn.execute(INSERT_ORDER.format(new_order_id, item_id, user_id, quantity))
+            cursor = g.conn.execute(f"SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_id={user_id}")
+            user_info = {}
+            for result in cursor:
+                user_info = {k:v for k,v in result.items()}
+                break
+            
+            assert(user_info)
+            session['user_info'] = user_info
+
+            return redirect(url_for("user", user_info=user_info))
+
+    return render_template('shop.html', title='shop', form=form, orderform=orderform)
+
+@app.route('/rate', methods=['GET', 'POST'])
+def rate():
+    user_id = session["user_id"]
+    form=RateForm()
+    if form.validate_on_submit(): # give rating
+        order_id, score = form.order_id.data, form.score.data
+        cursor = g.conn.execute(f"SELECT * FROM order_detail WHERE order_id={order_id} and user_id={user_id}")
+        found_order_id = None
+        for result in cursor:
+            found_order_id = result[0]
+        if not found_order_id: #username-password combination already exist
+            return render_template('rate.html', title='rate', form=form, error="Order not found!")
+        else: # give rating
+            # insert rating
+            cursor = g.conn.execute(INSERT_RATING.format(order_id, score))
+
+            cursor = g.conn.execute(f"SELECT user_id, user_name, TO_CHAR(created_time, 'yyyy-mm-dd') created_time, TO_CHAR(dob, 'yyyy-mm-dd') dob, gender FROM users where user_id={user_id}")
+            user_info = {}
+            for result in cursor:
+                user_info = {k:v for k,v in result.items()}
+                break
+            assert(user_info)
+            session['user_info'] = user_info
+
+            return redirect(url_for("user", user_info=user_info))
+    return render_template('rate.html', title='rate', form=form)
+
+
 @app.route('/update_user', methods=['GET', 'POST'])
 def update_user():
     print('update user')
@@ -170,6 +271,7 @@ def retailer_login():
 
 @app.route('/retailer', methods=['GET', 'POST'])
 def retailer():
+    form = RetailerForm()
     user_id = session['user_check']
     # query retailer info
     cursor = g.conn.execute(query_retailer_info(user_id))
@@ -192,7 +294,65 @@ def retailer():
     all_ads_title = list(result.keys()) if result else []
 
     context = {"user_info":user_info, "all_items":all_items, "all_items_title":all_items_title, "all_ads":all_ads, "all_ads_title":all_ads_title}
-    return render_template('retailer.html', title='retailer_info', **context)
+    
+    if form.validate_on_submit():
+        if form.update_account.data:
+            return redirect(url_for('update_retailer'))
+        elif form.update_item.data:
+            return redirect(url_for('update_item'))
+        elif form.ads.data:
+            session['user_id'] = user_id
+            return redirect(url_for('ads', user_id=user_id))
+
+    return render_template('retailer.html', title='retailer_info', **context, form=form)
+
+
+@app.route('/ads', methods=['GET', 'POST'])
+def ads():
+    user_id = session["user_id"]
+    form = AdsForm()
+
+    if form.validate_on_submit():
+        ad_title = form.ad_title.data
+        item_id = form.item_id.data
+        start_date, end_date = form.start_date.data, form.end_date.data
+        # print(start_date, end_date, type(start_date))
+        duration_days = (end_date-start_date).days + 1
+        price = duration_days * 100.0 
+        start_date = str(start_date)
+        end_date = str(end_date)
+
+        #verify item_id
+        cursor = g.conn.execute(f"SELECT * FROM item WHERE item_id={item_id} and retailer_id={user_id}")
+        found_order_id = None
+        for result in cursor:
+            found_order_id = result[0]
+        if not found_order_id: #username-password combination already exist
+            return render_template('ads.html', title='ads', form=form, error="Item not found!")
+        else: # purchase
+            # find ad id
+            ad_id = None
+            cursor = g.conn.execute("SELECT MAX(ad_id)+1 FROM ad;")
+            for result in cursor:
+                ad_id = result[0]
+                break
+            # find payment id
+            ad_payment_id = None
+            cursor = g.conn.execute("SELECT MAX(ad_payment_id)+1 FROM ad_payment;")
+            for result in cursor:
+                ad_payment_id = result[0]
+                break
+            # insert ad_payment
+            cursor = g.conn.execute(f"INSERT INTO ad_payment(ad_payment_id, amount, transaction_time) VALUES({ad_payment_id}, {price}, NOW())")
+           
+            # insert ad
+            cursor = g.conn.execute(INSERT_AD.format(ad_id, item_id, ad_title, start_date, end_date, ad_payment_id))
+            
+            session['user_check'] = user_id
+            return redirect(url_for("retailer", user_check=user_id))
+
+    return render_template('ads.html', title='ads', form=form)
+
 
 @app.route('/update_retailer', methods=['GET', 'POST'])
 def update_retailer():
@@ -231,7 +391,7 @@ def update_item():
         if user_check: #item found in table
             print(user_check)            
             session['user_check'] = user_check['retailer_id']
-            return redirect(url_for("retailer", user_check=user_check))
+            return redirect(url_for("retailer", user_check=user_check['retailer_id']))
 
         else: #not found in table
             return render_template('update_item.html', title='Sign In', form=form, error="Matching Item ID not found")
@@ -271,7 +431,6 @@ def admin():
             all_info.append(list(result.values()))
 
         if form.submit.data:
-
             if all_info:
                 all_info_title = list(result.keys()) if result else []
                 context["all_info"] = all_info
